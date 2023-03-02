@@ -61,5 +61,29 @@ module.exports={
                 })
             }
         })
+    },modifyRecruiter:(req,res)=>{
+        let {firstName,lastName}=req.body
+        connection.query(`update recruiters set ? where id = ${req.params.id}`,{firstName,lastName},(err,data)=>{
+            if(err){
+                res.send(err)
+            }else{
+                res.json({
+                    msg:"Updated the recruiter"
+                })
+            }
+        })
+    },addRecruiter:(req,res)=>{
+        let {firstName,lastName,email,password}=req.body
+        connection.query("insert into recruiters set ?",{firstName,lastName,email,password},(err,data)=>{
+            if(err){
+                res.send(err)
+            }else{
+                res.json({
+                    msg:"Sucessfully added a recruiter"
+                })
+            }
+        })
+    },exportAll:async(req,res)=>{
+
     }
 }
