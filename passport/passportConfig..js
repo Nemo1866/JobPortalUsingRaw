@@ -2,7 +2,7 @@
 const LocalStrategy=require("passport-local")
 const connection=require("../connection")
 const bcrypt=require("bcrypt")
-const { getCandidatesByEmail, getRecruitersByEmail } = require("../func")
+const { getCandidatesByEmail, getRecruitersByEmail, getAmdinByEmail } = require("../func")
 
 exports.PassportInitialize=(passport)=>{
 passport.use(new LocalStrategy ({usernameField:"email",passwordField:"password"},async function(email,password,done){
@@ -11,12 +11,15 @@ let user=null
 let candidate = await getCandidatesByEmail(connection,email)
 
 let recruiter=await getRecruitersByEmail(connection,email)
+let admin =await getAmdinByEmail(connection,email)
 
 if(candidate){
     user=candidate
-}else {
+}else if(recruiter){
     user=recruiter
  
+}else{
+  user=admin
 }
 if(!user){
     done("Email Address Not Exist",false)
@@ -64,21 +67,15 @@ exports.isAuthenticatedCandidate = async (req, res, next) => {
       return res.send("You're not logged in");
     }
   
-    let candidate = req.user.values[0];
-   
-   connection.query("Select * from candidates where email = ?",[candidate],(err,result)=>{
-    if(err){
-        res
-        .status(404)
-        .send(
-          `${req.user.dataValues.firstName} ${req.user.dataValues.lastName} is not a Candidate`
-        );
-
-    }else{
-return next()
-    }
-   })
-    
+    let email = req.user.values[0];
+  
+   let candidate=await getCandidatesByEmail(connection,email)
+   if(!candidate){
+    res.send("You're not a candidate.")
+   }else{
+    next()
+   }
+  
    
   };
 
@@ -88,22 +85,35 @@ return next()
       return res.send("You're not logged in");
     }
   
-    let recruiter = req.user.values[0];
-   
-   connection.query("Select * from recruiters where email = ?",[recruiter],(err,result)=>{
-    if(err){
-        res
-        .status(404)
-        .send(
-          `${req.user.dataValues.firstName} ${req.user.dataValues.lastName} is not a Recruiter`
-        );
+    let email= req.user.values[0];
+    let recruiter=await getRecruitersByEmail(connection,email)
 
+    if(!recruiter){
+      res.send("You're Not a recruiter")
     }else{
-return next()
+      next()
     }
-   })
+ 
     
    
   };
+
+
+  
+  exports.isAuthenticatedAdmin = async (req, res, next) => {
+    if (!req.user) {
+      return res.send("You're not logged in");
+    }
+  
+    let email = req.user.values[0];
+   
+   let admin=await getAmdinByEmail(connection,email)
+
+   if(!admin){
+    res.send("You're not a admin")
+   }else{
+    next()
+   } 
+   };
     
   

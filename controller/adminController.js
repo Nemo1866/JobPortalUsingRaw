@@ -1,28 +1,38 @@
 let connection=require("../connection")
+let {hash}=require("bcrypt")
+const { getAllCandidates, getAllRecruiters, getAllAppliedJobs } = require("../func")
+let xlsx=require("xlsx")
+const {pagination}=require("../pagination")
 
 module.exports={
     allCandidates:async(req,res)=>{
-        connection.query("Select * from candidates",(err,data)=>{
-            if(err){
-                res.send(err)
-            }else{
-                res.json({
-                    msg:data
-                })
-            }
+       let candidate=await getAllCandidates(connection)
+       if(!candidate){
+        res.send("Could not fine any data")
+       }else{
+        res.json({
+            msg:candidate
         })
+       }
     },allRecruiters:async(req,res)=>{
-        connection.query("Select * from recruiters",(err,data)=>{
+        let pageNumber=req.query.page
+        let sizeNumber=req.query.size
+        let {page,size}=pagination(pageNumber,sizeNumber)
+        connection.query(`Select * from recruiters limit ${size} offset ${page*size}`,(err,data)=>{
             if(err){
                 res.send(err)
             }else{
                 res.json({
-                    msg:data
+                    msg:data,
+                    
                 })
             }
         })
     },allJobs:async(req,res)=>{
-        connection.query("Select * from jobs",(err,data)=>{
+        let pageNumber=req.query.page
+        let sizeNumber=req.query.size
+        let {page,size}=pagination(pageNumber,sizeNumber)
+        connection.query(`Select * from jobs limit ${size} offset ${page*size}`,(err,data)=>{
             if(err){
                 res.send(err)
             }else{
@@ -72,9 +82,10 @@ module.exports={
                 })
             }
         })
-    },addRecruiter:(req,res)=>{
+    },addRecruiter:async(req,res)=>{
         let {firstName,lastName,email,password}=req.body
-        connection.query("insert into recruiters set ?",{firstName,lastName,email,password},(err,data)=>{
+        let hashPassword= await hash(password,10)
+        connection.query("insert into recruiters set ?",{firstName,lastName,email,password:hashPassword},(err,data)=>{
             if(err){
                 res.send(err)
             }else{
@@ -83,7 +94,64 @@ module.exports={
                 })
             }
         })
-    },exportAll:async(req,res)=>{
-
+    },login:(req,res)=>{
+        res.send(`Hello ${firstName} ${lastName}`)
+    },allAppliedJobs:async(req,res)=>{
+        let pageNumber=req.query.page
+        let sizeNumber=req.query.size
+        let {page,size}=pagination(pageNumber,sizeNumber)
+        connection.query(`Select j.title,j.description,ap.candidate_id from appliedJobs ap inner join jobs j on j.job_id=ap.job_id limit ${size} offset ${page*size}`,(err,result)=>{
+            if(err){
+                res.send(err)
+            }else{
+                res.json({
+                    msg:result
+                })
+            }
+        })
     }
+    
+    ,exportAll:async(req,res)=>{
+        let candidate=await getAllCandidates(connection)
+        let recruiter=await getAllRecruiters(connection)
+        let appliedJobs=await getAllAppliedJobs(connection)
+
+        
+
+        let CandidateSheet=xlsx.utils.json_to_sheet(candidate)
+        let RecruiterSheet=xlsx.utils.json_to_sheet(recruiter)
+        let AppliedSheet=xlsx.utils.json_to_sheet(appliedJobs)
+
+        let CandidateWorkBook=xlsx.utils.book_new()
+        xlsx.utils.book_append_sheet(CandidateWorkBook,CandidateSheet,'Candidate')
+
+
+        let RecruiterWorkBook=xlsx.utils.book_new()
+        xlsx.utils.book_append_sheet(RecruiterWorkBook,RecruiterSheet,'Recruiter')
+
+
+        let ApplyJobsWorkBook=xlsx.utils.book_new()
+        xlsx.utils.book_append_sheet(ApplyJobsWorkBook,AppliedSheet,'Applied Jobs')
+
+        xlsx.writeFile(CandidateWorkBook,"candidate.xlsx")
+        xlsx.writeFile(RecruiterWorkBook,"recruiter.xlsx")
+        xlsx.writeFile(ApplyJobsWorkBook,"appliedjobs.xlsx")
+
+        res.json({msg:"Exported all the data"})
+
+    },
+    // registerAdmin:async(req,res)=>{
+    //     let {firstName,lastName,email,password}=req.body
+    //     let hashPassword=await hash(password,10)
+    //     connection.query("insert into admin set ?",{firstName,lastName,email,password:hashPassword},(err,data)=>{
+    //         if(err){
+    //             res.send(err)
+    //         }else{
+    //             res.json({
+    //                 msg:"Sucessfully added a admin"
+    //             })
+    //         }
+    //     })
+    // },
+
 }

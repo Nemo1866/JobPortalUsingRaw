@@ -1,8 +1,8 @@
 const passport = require("passport")
-const { allCandidates, allRecruiters } = require("../controller/adminController")
-const { registerCandidate, allJobs, login, welcome, login2, logout, applyJobs, appliedjobs } = require("../controller/canController")
-const { postJob, registerRecruiter, candidateAppliedJobs } = require("../controller/recController")
-const { isAuthenticatedCandidate, isAuthenticatedRecruiter } = require("../passport/passportConfig.")
+const { allCandidates, allRecruiters, registerAdmin, removeCandidate, removeJob, removeRecruiter, modifyRecruiter, allAppliedJobs, exportAll } = require("../controller/adminController")
+const { registerCandidate, allJobs, login, welcome, login2, logout, applyJobs, appliedjobs, resetPassword, resetPasswordByToken } = require("../controller/canController")
+const { postJob, registerRecruiter, candidateAppliedJobs, resetPasswordRecruiter, resetPasswordByTokenRecruiter } = require("../controller/recController")
+const { isAuthenticatedCandidate, isAuthenticatedRecruiter, isAuthenticatedAdmin } = require("../passport/passportConfig.")
 
 let router=require("express").Router()
 
@@ -11,6 +11,8 @@ router.get("/alljobs",isAuthenticatedCandidate,allJobs)
 router.post("/login",passport.authenticate("local"),login2)
 router.get("/applyjob/:id",isAuthenticatedCandidate,applyJobs)
 router.get("/showapplied",isAuthenticatedCandidate,appliedjobs)
+router.post("/candidate/resetpassword",resetPassword)
+router.post("/candidate/resetpassword/:token",resetPasswordByToken)
 
 
 
@@ -19,12 +21,22 @@ router.get("/logout",logout)
 
 router.post("/recruiter/addjob",isAuthenticatedRecruiter,postJob)
 router.get("/recruiter/viewjobs",isAuthenticatedRecruiter,candidateAppliedJobs)
-router.post("/recruiter/register",registerRecruiter)
+router.post("/recruiter/resetpassword",resetPasswordRecruiter)
+router.post("/recruiter/resetpassword/:id",resetPasswordByTokenRecruiter)
 
 
-router.get("/admin/candidates",allCandidates)
-router.get("/admin/recruiters",allRecruiters)
-router.get("/admin/jobs",allJobs)
+router.get("/admin/candidates",isAuthenticatedAdmin,allCandidates)
+router.get("/admin/recruiters",isAuthenticatedAdmin,allRecruiters)
+router.get("/admin/jobs",isAuthenticatedAdmin,allJobs)
+router.get("/admin/appliedjobs",isAuthenticatedAdmin,allAppliedJobs)
+router.post("/admin/recruiter/register",isAuthenticatedAdmin,registerRecruiter)
+router.get("/admin/removecandidate/:id",isAuthenticatedAdmin,removeCandidate)
+router.get("/admin/removejob/:id",isAuthenticatedAdmin,removeJob)
+router.get("/admin/removerecruiter/:id",isAuthenticatedAdmin,removeRecruiter)
+router.post("/admin/updaterecruiter/:id",isAuthenticatedAdmin,modifyRecruiter)
+router.get("/admin/exportall",isAuthenticatedAdmin,exportAll)
+
+
 
 
 module.exports=router
