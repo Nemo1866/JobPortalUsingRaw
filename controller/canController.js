@@ -6,6 +6,7 @@ const { getCandidatesByEmail, getRecruitersByEmail, getRecruitersById } = requir
 
 const { mail } = require("../mailConfig");
 const { schema, schemaPassword, schemaReset } = require("../SchemaConfig");
+const { pagination } = require("../pagination");
 require("dotenv").config();
 
 module.exports = {
@@ -199,4 +200,7 @@ module.exports = {
       }
     });
   },
+  hello:(req,res)=>{
+    res.send("hello")
+  }
 };

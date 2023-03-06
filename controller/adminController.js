@@ -43,7 +43,7 @@ module.exports={
             }
         })
     },removeCandidate:(req,res)=>{
-        connection.query("Delete from candidates where id = ?",[req.params.id],(err,data)=>{
+        connection.query("Delete from candidates where candidate_id = ?",[req.params.id],(err,data)=>{
             if(err){
                 res.send(err)
             }else{
@@ -53,7 +53,7 @@ module.exports={
             }
         })
     },removeJob:(req,res)=>{
-        connection.query("Delete from jobs where id = ?",[req.params.id],(err,data)=>{
+        connection.query("Delete from jobs where job_id = ?",[req.params.id],(err,data)=>{
             if(err){
                 res.send(err)
             }else{
@@ -63,7 +63,7 @@ module.exports={
             }
         })
     },removeRecruiter:(req,res)=>{
-        connection.query("Delete from recruiters where id = ?",[req.params.id],(err,data)=>{
+        connection.query("Delete from recruiters where recruiter_id = ?",[req.params.id],(err,data)=>{
             if(err){
                 res.send(err)
             }else{
@@ -74,7 +74,7 @@ module.exports={
         })
     },modifyRecruiter:(req,res)=>{
         let {firstName,lastName}=req.body
-        connection.query(`update recruiters set ? where id = ${req.params.id}`,{firstName,lastName},(err,data)=>{
+        connection.query(`update recruiters set ? where recruiter_id = ${req.params.id}`,{firstName,lastName},(err,data)=>{
             if(err){
                 res.send(err)
             }else{

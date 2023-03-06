@@ -3,6 +3,7 @@ const {hash}=require("bcrypt")
 const { getRecruitersByEmail } = require("../func")
 const { mail } = require("../mailConfig")
 const { schemaReset } = require("../SchemaConfig")
+const { pagination } = require("../pagination")
 
 module.exports={
     postJob:async(req,res)=>{
