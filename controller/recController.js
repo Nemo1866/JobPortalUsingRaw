@@ -2,6 +2,7 @@ const connection=require("../connection")
 const {hash}=require("bcrypt")
 const { getRecruitersByEmail } = require("../func")
 const { mail } = require("../mailConfig")
+const { schemaReset } = require("../SchemaConfig")
 
 module.exports={
     postJob:async(req,res)=>{
@@ -24,31 +25,6 @@ module.exports={
         })
 
        
-
-    },registerRecruiter:async(req,res)=>{
-        try {
-          
-            let {firstName,lastName,email,password}=req.body
-            let hashPassword=await hash(password,10)
-            connection.query("Insert into recruiters set ?",{firstName,lastName,email,password:hashPassword},(err,result)=>{
-              
-                if(err){
-                   
-                    res.send(err)
-                }else{
-                    res.json({
-                        msg:"Registered Sucessfully"
-                    })
-                }
-            })
-
-        
-            
-        } catch (error) {
-            res.send("Some Error Occured")
-            console.log(error);
-        }
-        
 
     },resetPasswordRecruiter: async (req, res) => {
         const { email } = req.body;
@@ -86,23 +62,30 @@ module.exports={
         let secret = "Hello" + recruiter.password;
     
         jwt.verify(token, secret, async (err, data) => {
+          try {
+            let hashPassword = await hash(password, 10);
+            let check=await schemaReset.validateAsync(req.body)
+            connection.query(
+              `update recruiters set password = '${hashPassword}' where email = '${email}'`,
+              (err, data) => {
+                if (err) {
+                  res.send(err);
+                  return;
+                }
+                res.json({
+                  msg: "Successfully Updated the password",
+                });
+              }
+            );
+          } catch (error) {
+            res.send(error)
+            
+          }
           if (err) {
             res.send(err);
             return;
           }
-          let hashPassword = await hash(password, 10);
-          connection.query(
-            `update recruiters set password = '${hashPassword}' where email = '${email}'`,
-            (err, data) => {
-              if (err) {
-                res.send(err);
-                return;
-              }
-              res.json({
-                msg: "Successfully Updated the password",
-              });
-            }
-          );
+        
         });
       },candidateAppliedJobs:(req,res)=>{
         let pageNumber=req.query.page

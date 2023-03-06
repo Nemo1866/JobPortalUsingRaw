@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const { getCandidatesByEmail, getRecruitersByEmail, getRecruitersById } = require("../func");
 
 const { mail } = require("../mailConfig");
+const { schema, schemaPassword, schemaReset } = require("../SchemaConfig");
 require("dotenv").config();
 
 module.exports = {
@@ -12,21 +13,23 @@ module.exports = {
     try {
       let { firstName, lastName, email, password } = req.body;
       let hashPassword = await hash(password, 10);
+      let check=await schema.validateAsync(req.body)
       connection.query(
         "Insert into candidates set ?",
         { firstName, lastName, email, password: hashPassword },
-        (err, result) => {
+        async(err, result) => {
           if (err) {
             res.send("Email Address Already Exists");
             return;
           }
+          
           res.json({
             msg: "Registered Sucessfully",
           });
         }
       );
     } catch (error) {
-      res.send("Some Error Occured");
+      res.send(error);
       console.log(error);
     }
   },
@@ -58,35 +61,51 @@ module.exports = {
   },
 
   resetPasswordByToken: async (req, res) => {
-    let { token } = req.params;
-    let { email, password } = req.body;
-
-    if (!token) {
-      res.send("Please Provide token in order to change your password");
-      return;
-    }
-    let candidate = await getCandidatesByEmail(connection, email);
-    let secret = "Hello" + candidate.password;
-
-    jwt.verify(token, secret, async (err, data) => {
-      if (err) {
-        res.send(err);
+  
+      let { token } = req.params;
+      let { email, password } = req.body;
+  
+      if (!token) {
+        res.send("Please Provide token in order to change your password");
         return;
       }
-      let hashPassword = await hash(password, 10);
-      connection.query(
-        `update candidates set password = '${hashPassword}' where email = '${email}'`,
-        (err, data) => {
+      
+      let candidate = await getCandidatesByEmail(connection, email);
+      let secret = "Hello" + candidate.password;
+  
+      jwt.verify(token, secret, async (err, data) => {
+        try {
           if (err) {
             res.send(err);
             return;
           }
-          res.json({
-            msg: "Successfully Updated the password",
-          });
+         
+          let hashPassword = await hash(password, 10);
+          let check=await schemaReset.validateAsync(req.body)
+          
+      
+          connection.query(
+            `update candidates set password = '${hashPassword}' where email = '${email}'`,
+            async(err, data) => {
+       
+              if (err) {
+              
+                res.send(err);
+                return;
+              }
+           
+              res.json({
+                msg: "Successfully Updated the password",
+              });
+              console.log(5);
+            }
+          );
+        } catch (error) {
+          res.send(error)
         }
-      );
-    });
+       
+      });
+    
   },
 
   allJobs: (req, res) => {

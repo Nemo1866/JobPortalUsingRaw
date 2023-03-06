@@ -3,6 +3,7 @@ let {hash}=require("bcrypt")
 const { getAllCandidates, getAllRecruiters, getAllAppliedJobs } = require("../func")
 let xlsx=require("xlsx")
 const {pagination}=require("../pagination")
+const { schema } = require("../SchemaConfig")
 
 module.exports={
     allCandidates:async(req,res)=>{
@@ -83,17 +84,29 @@ module.exports={
             }
         })
     },addRecruiter:async(req,res)=>{
-        let {firstName,lastName,email,password}=req.body
-        let hashPassword= await hash(password,10)
-        connection.query("insert into recruiters set ?",{firstName,lastName,email,password:hashPassword},(err,data)=>{
-            if(err){
-                res.send(err)
-            }else{
-                res.json({
-                    msg:"Sucessfully added a recruiter"
-                })
-            }
-        })
+        try {
+            let {firstName,lastName,email,password}=req.body
+            let hashPassword= await hash(password,10)
+      
+            let check=await schema.validateAsync(req.body)
+    
+            connection.query("insert into recruiters set ?",{firstName,lastName,email,password:hashPassword},async(err,data)=>{
+                if(err){
+                    res.send(err)
+                    return 
+                }
+                    res.json({
+                        msg:"Sucessfully added a recruiter"
+                    })
+                
+            })
+            
+            
+        } catch (error) {
+            res.send(error)
+            console.log(error);
+        }
+       
     },login:(req,res)=>{
         res.send(`Hello ${firstName} ${lastName}`)
     },allAppliedJobs:async(req,res)=>{
